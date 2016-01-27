@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name MADW__LEDSEE_8x8_RGB)(type Legacy)(uri "$(KIPRJMOD)\\LIBS\\MADW__LEDSEE_8x8_RGB.mod")(options "")(descr ""))
+  (lib (name .pretty)(type KiCad)(uri "$(KIPRJMOD)\\.pretty")(options "")(descr ""))
+)
