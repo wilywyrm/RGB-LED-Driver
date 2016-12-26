@@ -12,6 +12,11 @@
 // non-essential
 #define SHIFT_OUT P1_6
 
+// some arbitrary constants
+#define FONT_TABLE_OFFSET 32
+#define FONT_CHAR_WIDTH 5
+#define DISPLAY_WIDTH 8
+
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize the interface pins as outputs.
@@ -44,7 +49,7 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
-  prints("JUST DO IT");
+  prints("WINNER WINNER CHICKEN DINNER");
 }
 
 // print string
@@ -53,17 +58,18 @@ void prints(char* str){
   // while the string has not ended
   while(*str){
     a = 0;
+    char c = *str;
     for(a = 0; a < 50; a++){
       int i = 0;
       for(i = 0; i < 8; i++){
         // disable shift register loading data until transmission done
         digitalWrite(SHIFT_LAT, LOW);
         // transfer anode (row)
-            // YOUR CODE HERE
+        SPI.transfer(1 << i);
         // transfer inverted font data for the current row
             // note that font data must be inverted since the first 3 (rgb)
             // shift registers control the cathodes (ground sides) of the LEDs
-            // YOUR CODE HERE
+        SPI.transfer(~(font_table[c - FONT_TABLE_OFFSET][i]));
 
 
         //digitalWrite(SHIFT_EN, HIGH);
@@ -99,11 +105,41 @@ void prints(char* str){
 void sprints(char* str, int loops){
   int a, b;
   unsigned char char1, char2;
-  int charwidth = 5;
+  const int SPACING = 1;
 
   // while the string is not empty
   while(*str){
+      char c1, c2;
+      c1 = *str;
+      c2 = *(str+1);
+
+      for(a = 0; a < loops; a++){
+        int i = 0;
+        for(b = 0; b < FONT_CHAR_WIDTH; b++){
+          for(i = 0; i < 8; i++){
+            // disable shift register loading data until transmission done
+            digitalWrite(SHIFT_LAT, LOW);
+            // transfer anode (row)
+            SPI.transfer(1 << i);
+            // transfer inverted font data for the current row
+                // note that font data must be inverted since the first 3 (rgb)
+                // shift registers control the cathodes (ground sides) of the LEDs
+            char c1_data = font_table[c1 - FONT_TABLE_OFFSET][i];
+            char c2_data = font_table[c2 - FONT_TABLE_OFFSET][i];
+            char send_data = ~(c1_data << b | FONT_CHAR_WIDTH+SPACING-b >> c2_data);
+            SPI.transfer(send_data);
+
+            //digitalWrite(SHIFT_EN, HIGH);
+            // disable outputs momentarily
+            digitalWrite(DRIVE_RST, LOW);
+            // signal to anode driver it is safe to pull in new data
+            digitalWrite(SHIFT_LAT, HIGH);
+            // extra clock cycle because data gets shifted to registers, then another for registers to LED driver, then enable outputs
+
+            delay(1);
+          }
+        }
+      }
       str++;
   }
 }
-
